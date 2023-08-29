@@ -28,7 +28,11 @@ pub fn build(b: *std.Build) void {
     // Standard optimization options allow the person running `zig build` to select
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall. Here we do not
     // set a preferred release mode, allowing the user to decide how to optimize.
-    const optimize = b.standardOptimizeOption(.{});
+    const optimize = b.option(
+        std.builtin.Mode,
+        "optimize",
+        "Prioritize performance, safety, or binary size (-O flag)",
+    ) orelse .ReleaseSmall;
 
     const exe = b.addExecutable(.{
         .name = "zaftx07",
