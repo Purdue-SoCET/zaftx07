@@ -1,6 +1,6 @@
 MEMORY
 {
-    RAM : ORIGIN = 0x8400, LENGTH = 8K
+    RAM : ORIGIN = 0x8400, LENGTH = 32K
 }
 
 ENTRY(__aftx07_init);

@@ -15,6 +15,11 @@ pub fn build(b: *std.Build) void {
             .m,
             .c,
         }),
+        .cpu_features_sub = featureSet(&[_]Feature{
+            .a,
+            .f,
+            .d,
+        }),
         .os_tag = .freestanding,
         .os_version_min = .none,
         .os_version_max = .none,
