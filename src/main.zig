@@ -24,7 +24,7 @@ pub const os = struct {
     };
 };
 
-export fn main() void {
+fn main() !void {
     const writer = Writer{ .context = {} };
 
     // Printing example
@@ -56,4 +56,9 @@ export fn main() void {
 
         defer allocator.free(heap_string);
     }
+}
+
+export fn _main() void {
+    const writer = Writer{ .context = {} };
+    main() catch |e| std.fmt.format(writer, "[ERROR] main() failed: {}", .{e}) catch {};
 }
