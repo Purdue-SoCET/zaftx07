@@ -14,47 +14,40 @@ fn write(_: void, bytes: []const u8) error{}!usize {
     return bytes_written;
 }
 
-pub const os = struct {
-    pub const heap = struct {
-        const heap_start = @extern([*]u8, .{ .name = "__heap_start" });
-        const heap_size = 1024 * 2;
-        const heap_array = heap_start[0..heap_size];
-        var backing_fba = std.heap.FixedBufferAllocator.init(heap_array);
-        pub const page_allocator = backing_fba.allocator();
-    };
-};
-
 fn main() !void {
     const writer = Writer{ .context = {} };
 
     // Printing example
     {
         var one_plus_one: usize = 1 + 1;
-        // Commented out as float rt routines are quite slow and bloats binary size
-        // var one_half: f32 = 0.5;
+        var one_half: f32 = 0.5;
         var hello_world: []const u8 = "Hello World";
-        std.fmt.format(writer, "Hello from Zig!\n", .{}) catch unreachable;
-        std.fmt.format(writer, "Very complex equation: 1 + 1 = {}\n", .{one_plus_one}) catch unreachable;
-        // std.fmt.format(writer, "Very advanced float: 0.5 = {}\n", .{one_half}) catch unreachable;
-        std.fmt.format(writer, "Very technical string: \"Hello World\" = {s}\n", .{hello_world}) catch unreachable;
+        try std.fmt.format(writer, "Hello from Zig!\n", .{});
+        try std.fmt.format(writer, "Very complex equation: 1 + 1 = {}\n", .{one_plus_one});
+        try std.fmt.format(writer, "Very advanced float: 0.5 = {}\n", .{one_half});
+        try std.fmt.format(writer, "Very technical string: \"Hello World\" = {s}\n", .{hello_world});
     }
 
     // Memory allocation example
     {
-        // TODO: safety doesn't work due to debug being very reliant on hosted systems
-        var gpa = std.heap.GeneralPurposeAllocator(.{ .thread_safe = false }){};
-        defer if (gpa.deinit() == .leak) std.fmt.format(writer, "Memory leak detected!", .{}) catch unreachable;
+        const heap_start = @extern([*]u8, .{ .name = "__heap_start" });
+        const heap_size = 1024;
+        const heap_array = heap_start[0..heap_size];
+        var backing_fba = std.heap.FixedBufferAllocator.init(heap_array);
+        const page_allocator = backing_fba.allocator();
+        var arena = std.heap.ArenaAllocator.init(page_allocator);
+        defer arena.deinit();
 
-        var allocator = gpa.allocator();
+        var allocator = arena.allocator();
 
-        const heap_string = allocator.alloc(u8, 20) catch unreachable;
+        const heap_string = try allocator.alloc(u8, 20);
+        defer allocator.free(heap_string);
+
         std.mem.copy(u8, heap_string, "hello world");
-        std.fmt.format(writer, "heap_string: \"{s}\"", .{heap_string}) catch unreachable;
+        try std.fmt.format(writer, "heap_string: \"{s}\"", .{heap_string});
 
         const array_list = std.ArrayList(struct {}).init(allocator);
         defer array_list.deinit();
-
-        defer allocator.free(heap_string);
     }
 }
 
